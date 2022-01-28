@@ -10,34 +10,83 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// DATABASE
+// URL-DATABASE
 const urlDatabase = {
 	b2xVn2: 'http://www.lighthouselabs.ca',
 	'9sm5xK': 'http://www.google.com',
 };
 
-// GENERATE RANDOM NUMBER
-const rndmNum = function () {
+// USERS DATABASE
+const users = {
+	userRandomID: {
+		id: 'userRandomID',
+		email: 'user@example.com',
+		password: 'purple-monkey-dinosaur',
+	},
+	user2RandomID: {
+		id: 'user2RandomID',
+		email: 'user2@example.com',
+		password: 'dishwasher-funk',
+	},
+};
+
+// GENERATE RANDOM STRING1
+const rndmStr = function () {
 	let rndmStr = (Math.random() + 1).toString(36).substring(7);
 	return rndmStr;
 };
 
-// Login
-app.post('/login', (req, res) => {
-	res.cookie('username', req.body.username);
+// Register POST
+app.post('/register', (req, res) => {
+	const newID = rndmStr();
+	const newEmail = req.body.email;
+	const newPassword = req.body.password;
+	users[newID] = { id: newID, email: newEmail, password: newPassword };
 	res.redirect('/home');
 });
+// Register GET
+app.get('/register', (req, res) => {
+	res.render('register');
+});
 
-// Logout
+// Login GET
+app.get('/login', (req, res) => {
+	res.render('login');
+});
+
+const verifyUser = function (email, password) {
+	for (let id in users) {
+		if (users[id].email === email && users[id].password === password) return users[id];
+	}
+	return null;
+};
+
+// Login POST
+app.post('/login', (req, res) => {
+	const candidateEmail = req.body.email;
+	const candidatePassword = req.body.password;
+	const userObj = verifyUser(candidateEmail, candidatePassword);
+	if (userObj) {
+		res.cookie('user_id', userObj.id);
+		res.redirect('/home');
+	}
+});
+
+// Login GET
+app.get('/login', (req, res) => {
+	const tempVars = { urls: urlDatabase, user: users[req.cookies['user_id']] };
+	res.render('home', tempVars);
+});
+// Logout POST
 app.post('/logout', (req, res) => {
-	res.clearCookie('username', req.body.username);
-	res.redirect('/home');
+	res.clearCookie('user_id', req.body.user_id);
+	res.redirect('/login');
 });
 /* UPDATE DATABASE AND HOME PAGE WITH { SHORT-URL : LONG-URL } 
     FROM CREATE URL PAGE */
 app.post('/home', (req, res) => {
 	const longURL = req.body.longURL;
-	const shortURL = rndmNum();
+	const shortURL = rndmStr();
 	urlDatabase[shortURL] = longURL;
 	res.redirect(`/home`);
 });
@@ -46,7 +95,7 @@ app.post('/home', (req, res) => {
 app.post('/home/:shortURL', (req, res) => {
 	const longURL = req.body.longURL;
 	const shortURL = req.params.shortURL;
-	const tempVars = { longURL, shortURL, username: req.cookies['username'] };
+	const tempVars = { longURL: longURL, shortURL: shortURL };
 	urlDatabase[shortURL] = longURL;
 	res.render('show', tempVars);
 });
@@ -60,25 +109,24 @@ app.post('/home/:shortURL/delete', (req, res) => {
 
 // RENDER HOME PAGE
 app.get('/home', (req, res) => {
-	const tempVars = { urls: urlDatabase, username: req.cookies['username'] };
+	const tempVars = { urls: urlDatabase, user: users[req.cookies['user_id']] };
 	res.render('home', tempVars);
 });
 
 // RENDER CREATE SHORT-URL PAGE
 app.get('/home/createURL', (req, res) => {
 	const tempVars = {
-		username: req.cookies['username'],
+		user: users[req.cookies['user_id']],
 	};
 	res.render('createURL', tempVars);
 });
-
 // RENDER SHOW SHORTURL PAGE
 app.get('/home/:shortURL', (req, res) => {
 	const url = urlDatabase[req.params.shortURL];
 	const tempVars = {
 		shortURL: req.params.shortURL,
 		longURL: urlDatabase[req.params.shortURL],
-		username: req.cookies['username'],
+		user: users[req.cookies['user_id']],
 	};
 	res.render('show', tempVars);
 });

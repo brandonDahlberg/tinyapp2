@@ -18,28 +18,20 @@
 				<a class="nav-item nav-link" href="/home/createURL">Create New URL</a>
 			</div>
 			<div>
-				<!-- <form method="POST" action="/login" name="username">
-					<label><%= username %> </label>
-					<input type="text" name="username" />
-					<button type="submit" class="btn btn-outline-light">Login</button>
-				</form> -->
-
-				<% if(!username){ %>
-				<form method="POST" action="/login" name="username">
-					<input type="text" name="username" placeholder="username" /><button
-						type="submit"
-						class="btn btn-outline-light"
-						value="login"
-					>
-						login
-					</button>
+				<form method="GET" action="/register" name="username">
+					<button type="submit" class="btn btn-outline-light" value="register">Register</button>
 				</form>
-				<% }else if(username){ %>
+			</div>
+			<div>
+				<form method="GET" action="/login" name="username">
+					<button type="submit" class="btn btn-outline-light" value="login">login</button>
+				</form>
+			</div>
+			<div>
 				<form method="POST" action="/logout">
-					<label>Logged in as: <%= username %>!</label>
+					<label></label>
 					<button type="submit" class="btn btn-outline-light" value="logout">logout</button>
 				</form>
-				<% } %>
 			</div>
 		</div>
 	</nav>
