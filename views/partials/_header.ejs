@@ -18,21 +18,42 @@
 				<a class="nav-item nav-link" href="/home/createURL">Create New URL</a>
 			</div>
 			<div>
-				<form method="GET" action="/register" name="username">
-					<button type="submit" class="btn btn-outline-light" value="register">Register</button>
+				<% if(!user){ %>
+				<!-- Register Button -->
+				<form method="GET" action="/register" name="user_id">
+					<button
+						type="submit"
+						class="btn btn-outline-light"
+						value="register"
+						style="margin-right: 5px; margin-left: 5px"
+					>
+						Register
+					</button>
+				</form>
+				<!-- Login Button -->
+				<form method="GET" action="/login" name="user_id">
+					<button type="submit" class="btn btn-outline-light" value="login" style="margin-left: 5px">login</button>
 				</form>
 			</div>
+			<% } else { %>
 			<div>
-				<form method="GET" action="/login" name="username">
-					<button type="submit" class="btn btn-outline-light" value="login">login</button>
-				</form>
+				<h4>Logged in as <%= user.email %></h4>
 			</div>
 			<div>
+				<!-- Logout Button -->
 				<form method="POST" action="/logout">
 					<label></label>
-					<button type="submit" class="btn btn-outline-light" value="logout">logout</button>
+					<button
+						type="submit"
+						class="btn btn-outline-light"
+						value="logout"
+						style="margin-right: 5px; margin-left: 5px"
+					>
+						logout
+					</button>
 				</form>
 			</div>
+			<% } %>
 		</div>
 	</nav>
 </header>

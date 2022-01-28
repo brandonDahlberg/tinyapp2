@@ -64,12 +64,8 @@ app.post('/register', (req, res) => {
 });
 // Register GET
 app.get('/register', (req, res) => {
-	res.render('register');
-});
-
-// Login GET
-app.get('/login', (req, res) => {
-	res.render('login');
+	const tempVars = { urls: urlDatabase, user: users[req.cookies['user_id']] };
+	res.render('register', tempVars);
 });
 
 // Login POST
@@ -86,11 +82,14 @@ app.post('/login', (req, res) => {
 // Login GET
 app.get('/login', (req, res) => {
 	const tempVars = { urls: urlDatabase, user: users[req.cookies['user_id']] };
-	res.render('home', tempVars);
+	console.log(tempVars);
+	res.render('login', tempVars);
 });
 // Logout POST
 app.post('/logout', (req, res) => {
+	res.clearCookie('user_id');
 	res.redirect('/login');
+	console.log(users);
 });
 /* UPDATE DATABASE AND HOME PAGE WITH { SHORT-URL : LONG-URL } 
     FROM CREATE URL PAGE */
@@ -120,6 +119,7 @@ app.post('/home/:shortURL/delete', (req, res) => {
 // RENDER HOME PAGE
 app.get('/home', (req, res) => {
 	const tempVars = { urls: urlDatabase, user: users[req.cookies['user_id']] };
+
 	res.render('home', tempVars);
 });
 
