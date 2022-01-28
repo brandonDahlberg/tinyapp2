@@ -36,13 +36,31 @@ const rndmStr = function () {
 	return rndmStr;
 };
 
+const verifyUser = function (email, password) {
+	for (let id in users) {
+		if (users[id].email === email && users[id].password === password) return users[id];
+	}
+	return false;
+};
+const verifyUserEmail = function (email) {
+	for (let id in users) {
+		if (users[id].email === email) return users[id];
+	}
+	return null;
+};
+
 // Register POST
 app.post('/register', (req, res) => {
 	const newID = rndmStr();
 	const newEmail = req.body.email;
 	const newPassword = req.body.password;
-	users[newID] = { id: newID, email: newEmail, password: newPassword };
-	res.redirect('/home');
+	const userObj = verifyUserEmail(newEmail);
+	if (userObj) {
+		res.status(403).send('user already exists');
+	} else if (!userObj) {
+		users[newID] = { id: newID, email: newEmail, password: newPassword };
+		res.redirect('/login');
+	}
 });
 // Register GET
 app.get('/register', (req, res) => {
@@ -54,13 +72,6 @@ app.get('/login', (req, res) => {
 	res.render('login');
 });
 
-const verifyUser = function (email, password) {
-	for (let id in users) {
-		if (users[id].email === email && users[id].password === password) return users[id];
-	}
-	return null;
-};
-
 // Login POST
 app.post('/login', (req, res) => {
 	const candidateEmail = req.body.email;
@@ -69,7 +80,7 @@ app.post('/login', (req, res) => {
 	if (userObj) {
 		res.cookie('user_id', userObj.id);
 		res.redirect('/home');
-	}
+	} else res.status(403).send('Login Invalid');
 });
 
 // Login GET
@@ -79,7 +90,6 @@ app.get('/login', (req, res) => {
 });
 // Logout POST
 app.post('/logout', (req, res) => {
-	res.clearCookie('user_id', req.body.user_id);
 	res.redirect('/login');
 });
 /* UPDATE DATABASE AND HOME PAGE WITH { SHORT-URL : LONG-URL } 
