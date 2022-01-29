@@ -6,9 +6,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
-const { verifyUser, verifyUserEmail, rndmStr, urlDatabase, users } = require('./views/partials/helpers');
-// const password = 'purple-monkey-dinosaur'; // found in the req.params object
-// const hashedPassword = bcrypt.hashSync(password, 10);
+const { verifyUser, verifyUserEmail, rndmStr, urlDatabase, users } = require('./helpers');
 
 // MIDDLEWARE
 app.set('view engine', 'ejs');
@@ -21,13 +19,20 @@ app.use(
 	})
 );
 
-/* UPDATE DATABASE AND HOME PAGE WITH { SHORT-URL : LONG-URL }
-  FROM CREATE URL PAGE */
-app.post('/home', (req, res) => {
-	const longURL = req.body.longURL;
-	const shortURL = rndmStr();
-	urlDatabase[shortURL] = { longURL, userID: req.session.user_id };
-	res.redirect('/home');
+// app.get('/:longURL', (req, res) => {
+// 	const longURL = urlDatabase
+// });
+
+// Register GET
+app.get('/register', (req, res) => {
+	const tempVars = { urls: urlDatabase, user: users[req.session.user_id] };
+	res.render('register', tempVars);
+});
+
+// Login GET
+app.get('/login', (req, res) => {
+	const tempVars = { urls: urlDatabase, user: users[req.session.user_id] };
+	res.render('login', tempVars);
 });
 
 // Register POST
@@ -58,22 +63,15 @@ app.post('/register', (req, res) => {
 	});
 });
 
-// Login GET
-app.get('/login', (req, res) => {
-	const tempVars = { urls: urlDatabase, user: users[req.session.user_id] };
-	res.render('login', tempVars);
-});
-
 // Logout POST
 app.post('/logout', (req, res) => {
 	res.clearCookie('session');
 	res.redirect('/login');
 });
 
-// Register GET
-app.get('/register', (req, res) => {
-	const tempVars = { urls: urlDatabase, user: users[req.session.user_id] };
-	res.render('register', tempVars);
+// ERROR PAGE
+app.get('/error', (req, res) => {
+	res.render('error');
 });
 
 // RENDER HOME PAGE GET
@@ -92,6 +90,15 @@ app.get('/home/createURL', (req, res) => {
 	} else {
 		res.render('createURL', tempVars);
 	}
+});
+
+/* UPDATES DATABASE AND HOME PAGE WITH { SHORT-URL : LONG-URL }
+  FROM CREATE URL PAGE */
+app.post('/home', (req, res) => {
+	const longURL = req.body.longURL;
+	const shortURL = rndmStr();
+	urlDatabase[shortURL] = { longURL, userID: req.session.user_id };
+	res.redirect('/home');
 });
 
 // REDIRECTS BROWSER TO WEBPAGE OF LONG-URL BASED ON SHORT-URL
@@ -118,9 +125,7 @@ app.post('/home/:shortURL', (req, res) => {
 app.get('/home/:shortURL', (req, res) => {
 	const shortURL = req.params.shortURL;
 	const cookieID = req.session.user_id;
-	console.log('req.session.user_id: ', req.session.user_id);
 	const userID = urlDatabase[shortURL].userID;
-	console.log('userID: ', userID);
 	const tempVars = {
 		shortURL: req.params.shortURL,
 		longURL: urlDatabase[shortURL],
@@ -136,7 +141,7 @@ app.get('/home/:shortURL', (req, res) => {
 	}
 });
 
-// DELETE URLS
+// DELETE BUTTON ON HOME PAGE
 app.post('/home/:shortURL/delete', (req, res) => {
 	const shortURL = req.params.shortURL;
 	const cookieID = req.session.user_id;
@@ -150,10 +155,6 @@ app.post('/home/:shortURL/delete', (req, res) => {
 			res.redirect('/error');
 		}
 	}
-});
-
-app.get('/error', (req, res) => {
-	res.render('error');
 });
 
 app.listen(PORT, () => {

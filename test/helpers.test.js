@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const { verifyUser, verifyUserEmail, rndmStr, urlDatabase, users } = require('../views/partials/helpers.js');
+const { verifyUser, verifyUserEmail, rndmStr, urlDatabase, users } = require('../helpers.js');
 
 const testUsers = {
 	userRandomID: {
