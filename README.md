@@ -4,7 +4,14 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["screenshot"](screen_shots/Screen Shot 2022-01-29 at 4.42.47 PM.png?raw=true "Optional Title")
+The application allows you to create short urls, but that's not all! It is has many security features, such as:
+
+- Does not allow users to access or view urls if they are not logged in or register.
+- Does not allow users to edit or delete urls that do not belong to them.
+- Does not allow users to create multiple accounts with the same email.
+- Does not allow users to login with invalid login credentials ie. incorrect email or password, password does not correspond with email, did not fill in one or more fields for login or register.
+- Shows username in header when logged in and logout button.
+- Shows login and register buttons if not logged into your account.
 
 ## Dependencies
 
