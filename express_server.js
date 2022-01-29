@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+const { verifyUser, verifyUserEmail, rndmStr, urlDatabase, users } = require('./views/partials/helpers');
 // const password = 'purple-monkey-dinosaur'; // found in the req.params object
 // const hashedPassword = bcrypt.hashSync(password, 10);
 
@@ -16,52 +17,9 @@ app.use(cookieParser());
 app.use(
 	cookieSession({
 		name: 'session',
-		keys: ['Aura smells like wet', 'Toothless is so ruthless'],
+		keys: ['Aura smells like wet dog', 'Toothless is so ruthless'],
 	})
 );
-
-// URL-DATABASE
-const urlDatabase = {
-	b2xVn2: { longURL: 'http://www.lighthouselabs.ca', userID: 'userRandomID' },
-	'9sm5xK': { longURL: 'http://www.google.com', userID: 'user2RandomID' },
-};
-
-// USER DATABASE
-const users = {
-	userRandomID: {
-		id: 'userRandomID',
-		email: 'user@example.com',
-		password: 'purple-monkey-dinosaur',
-	},
-	user2RandomID: {
-		id: 'user2RandomID',
-		email: 'user2@example.com',
-		password: 'dishwasher-funk',
-	},
-};
-
-// GENERATE RANDOM STRING1
-const rndmStr = function () {
-	let rndmStr = (Math.random() + 1).toString(36).substring(7);
-	return rndmStr;
-};
-
-const verifyUser = function (email, password) {
-	for (let id in users) {
-		if (users[id].email === email && users[id].password === password) return users[id];
-	}
-	return false;
-};
-const verifyUserEmail = function (email) {
-	for (let id in users) {
-		if (users[id].email === email) return users[id];
-	}
-	return false;
-};
-
-//
-// POST REQUESTS
-//
 
 /* UPDATE DATABASE AND HOME PAGE WITH { SHORT-URL : LONG-URL }
   FROM CREATE URL PAGE */
@@ -77,7 +35,7 @@ app.post('/register', (req, res) => {
 	const newID = rndmStr();
 	const newEmail = req.body.email;
 	const newPassword = req.body.password;
-	const userObj = verifyUserEmail(newEmail);
+	const userObj = verifyUserEmail(newEmail, users);
 	if (userObj) {
 		res.status(403).send('user already exists');
 	} else if (!userObj) {
@@ -92,6 +50,7 @@ app.post('/register', (req, res) => {
 		const candidatePassword = req.body.password;
 		const userObj = verifyUser(candidateEmail, candidatePassword);
 		if (userObj) {
+			console.log(users);
 			// res.cookie('user_id', userObj.id);
 			req.session.user_id = userObj.id;
 			res.redirect('/home');
@@ -131,7 +90,7 @@ app.get('/home/createURL', (req, res) => {
 	if (req.session.user_id) {
 		res.render('createURL', tempVars);
 	} else {
-		res.redirect('/login');
+		res.render('createURL', tempVars);
 	}
 });
 
