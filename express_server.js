@@ -4,11 +4,21 @@ const PORT = 3003;
 const app = express();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
+const bcrypt = require('bcryptjs');
+// const password = 'purple-monkey-dinosaur'; // found in the req.params object
+// const hashedPassword = bcrypt.hashSync(password, 10);
 
 // MIDDLEWARE
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(
+	cookieSession({
+		name: 'session',
+		keys: ['Aura smells like wet', 'Toothless is so ruthless'],
+	})
+);
 
 // URL-DATABASE
 const urlDatabase = {
@@ -16,7 +26,7 @@ const urlDatabase = {
 	'9sm5xK': { longURL: 'http://www.google.com', userID: 'user2RandomID' },
 };
 
-// USERS DATABASE
+// USER DATABASE
 const users = {
 	userRandomID: {
 		id: 'userRandomID',
@@ -58,7 +68,7 @@ const verifyUserEmail = function (email) {
 app.post('/home', (req, res) => {
 	const longURL = req.body.longURL;
 	const shortURL = rndmStr();
-	urlDatabase[shortURL] = { longURL, userID: req.cookies['user_id'] };
+	urlDatabase[shortURL] = { longURL, userID: req.session.user_id };
 	res.redirect('/home');
 });
 
@@ -72,7 +82,7 @@ app.post('/register', (req, res) => {
 		res.status(403).send('user already exists');
 	} else if (!userObj) {
 		users[newID] = { id: newID, email: newEmail, password: newPassword };
-		res.cookie('user_id', users[newID].id);
+		req.session.user_id = users[newID].id;
 		res.redirect('/home');
 	}
 
@@ -82,7 +92,8 @@ app.post('/register', (req, res) => {
 		const candidatePassword = req.body.password;
 		const userObj = verifyUser(candidateEmail, candidatePassword);
 		if (userObj) {
-			res.cookie('user_id', userObj.id);
+			// res.cookie('user_id', userObj.id);
+			req.session.user_id = userObj.id;
 			res.redirect('/home');
 		} else res.send('Login Invalid');
 	});
@@ -90,34 +101,34 @@ app.post('/register', (req, res) => {
 
 // Login GET
 app.get('/login', (req, res) => {
-	const tempVars = { urls: urlDatabase, user: users[req.cookies['user_id']] };
+	const tempVars = { urls: urlDatabase, user: users[req.session.user_id] };
 	res.render('login', tempVars);
 });
 
 // Logout POST
 app.post('/logout', (req, res) => {
-	res.clearCookie('user_id');
+	res.clearCookie('session');
 	res.redirect('/login');
 });
 
 // Register GET
 app.get('/register', (req, res) => {
-	const tempVars = { urls: urlDatabase, user: users[req.cookies['user_id']] };
+	const tempVars = { urls: urlDatabase, user: users[req.session.user_id] };
 	res.render('register', tempVars);
 });
 
 // RENDER HOME PAGE GET
 app.get('/home', (req, res) => {
-	const tempVars = { urls: urlDatabase, user: users[req.cookies['user_id']] };
+	const tempVars = { urls: urlDatabase, user: users[req.session.user_id] };
 	res.render('home', tempVars);
 });
 
 // RENDER CREATE SHORT-URL PAGE
 app.get('/home/createURL', (req, res) => {
 	const tempVars = {
-		user: users[req.cookies['user_id']],
+		user: users[req.session.user_id],
 	};
-	if (req.cookies['user_id']) {
+	if (req.session.user_id) {
 		res.render('createURL', tempVars);
 	} else {
 		res.redirect('/login');
@@ -140,19 +151,21 @@ app.post('/home/:shortURL', (req, res) => {
 	const longURL = req.body.longURL;
 	const shortURL = req.params.shortURL;
 	urlDatabase[shortURL].longURL = longURL;
-	const tempVars = { user: users[req.cookies['user_id']], urls: urlDatabase, longURL: longURL, shortURL: shortURL };
+	const tempVars = { user: users[req.session.user_id], urls: urlDatabase, longURL: longURL, shortURL: shortURL };
 	res.render('home', tempVars);
 });
 
 // EDIT BUTTON ON HOME PAGE
 app.get('/home/:shortURL', (req, res) => {
 	const shortURL = req.params.shortURL;
-	const cookieID = req.cookies['user_id'];
+	const cookieID = req.session.user_id;
+	console.log('req.session.user_id: ', req.session.user_id);
 	const userID = urlDatabase[shortURL].userID;
+	console.log('userID: ', userID);
 	const tempVars = {
 		shortURL: req.params.shortURL,
 		longURL: urlDatabase[shortURL],
-		user: users[req.cookies['user_id']],
+		user: users[req.session.user_id],
 	};
 	if (cookieID) {
 		// make sure user is logged in and the urls belong to him.
@@ -167,7 +180,7 @@ app.get('/home/:shortURL', (req, res) => {
 // DELETE URLS
 app.post('/home/:shortURL/delete', (req, res) => {
 	const shortURL = req.params.shortURL;
-	const cookieID = req.cookies['user_id'];
+	const cookieID = req.session.user_id;
 	const userID = urlDatabase[shortURL].userID;
 	if (cookieID) {
 		// make sure user is logged in and the urls belong to him.
