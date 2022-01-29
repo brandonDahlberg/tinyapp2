@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>TinyAPP Error Page</title>
+	</head>
+	<body>
+		<div>
+			<h3>Permission Denied :(</h3>
+		</div>
+		<div>
+			<h5>You may only edit or delete URLs that belong to you and you must be logged in!</h5>
+		</div>
+		<div>
+			<form method="GET" action="/login">
+				<p>sooo... <button type="submit" class="btn btn-outline-primary">Login</button></p>
+			</form>
+		</div>
+		<h4>OR</h4>
+		<div>
+			<form method="GET" action="/home">
+				<p>
+					Go back to the <button type="submit" class="btn btn-outline-primary">Home Page</button> but don't touch links
+					that aren't yours!
+				</p>
+			</form>
+		</div>
+	</body>
+</html>
