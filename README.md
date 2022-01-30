@@ -13,6 +13,12 @@ The application allows you to create short urls, but that's not all! It is has m
 - Shows username in header when logged in and logout button.
 - Shows login and register buttons if not logged into your account.
 
+!["Screenshot of registration page"](https://github.com/brandonDahlberg/tinyapp2/blob/master/docs/registration_page.png?raw=true)
+!["Screenshot of login page"](https://github.com/brandonDahlberg/tinyapp2/blob/master/docs/login_page.png?raw=true)
+!["Screenshot of home when logged in page"](https://github.com/brandonDahlberg/tinyapp2/blob/master/docs/home_page.png?raw=true)
+!["Screenshot of home page when not logged in"](https://github.com/brandonDahlberg/tinyapp2/blob/master/docs/home_page_not_logged_in.png?raw=true)
+!["Screenshot of edit URLs page"](https://github.com/brandonDahlberg/tinyapp2/blob/master/docs/edit_url.png?raw=true)
+
 ## Dependencies
 
 - Node.js
