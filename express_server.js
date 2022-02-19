@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
-const { verifyUser, verifyUserEmail, rndmStr, urlDatabase, users } = require('./helpers');
+const { verifyUser, verifyUserEmail, rndmStr, urlDatabase, users, getUserURLs } = require('./helpers');
 
 // MIDDLEWARE
 app.set('view engine', 'ejs');
@@ -18,10 +18,6 @@ app.use(
 		keys: ['Aura smells like wet dog', 'Toothless is so ruthless'],
 	})
 );
-
-// app.get('/:longURL', (req, res) => {
-// 	const longURL = urlDatabase
-// });
 
 // Register GET
 app.get('/register', (req, res) => {
@@ -37,32 +33,39 @@ app.get('/login', (req, res) => {
 
 // Register POST
 app.post('/register', (req, res) => {
-	const newID = rndmStr();
+	const newId = rndmStr();
 	const newEmail = req.body.email;
 	const newPassword = req.body.password;
+	if (newEmail === '' || newPassword === '') {
+		res.status(403).send('Username name or email fields');
+	}
 	const userObj = verifyUserEmail(newEmail, users);
 	if (userObj) {
 		res.status(403).send('user already exists');
 	} else if (!userObj) {
-		users[newID] = { id: newID, email: newEmail, password: newPassword };
-		req.session.user_id = users[newID].id;
+		users[newId] = { id: newId, email: newEmail, password: newPassword };
+		req.session.user_id = users[newId].id;
 		res.redirect('/home');
 	}
 
 	// Login POST
-	app.post('/login', (req, res) => {
-		const candidateEmail = req.body.email;
-		const candidatePassword = req.body.password;
-		const userObj = verifyUser(candidateEmail, candidatePassword);
-		if (userObj) {
-			console.log(users);
-			// res.cookie('user_id', userObj.id);
-			req.session.user_id = userObj.id;
-			res.redirect('/home');
-		} else res.send('Login Invalid');
-	});
 });
-
+app.post('/login', (req, res) => {
+	const candidateEmail = req.body.email;
+	const candidatePassword = req.body.password;
+	const userObj = verifyUser(candidateEmail, candidatePassword);
+	console.log('userObj', userObj);
+	if (!userObj) {
+		res.status(400).send('Login Invalid!');
+	} else if (candidateEmail === '' || candidatePassword === '') {
+		res.status(400).send('Username name or email fields cannot be empty.');
+	} else if (userObj) {
+		console.log('Hellooo');
+		req.session.userId = userObj.id;
+		console.log(userObj.id);
+		res.redirect('/home');
+	}
+});
 // Logout POST
 app.post('/logout', (req, res) => {
 	res.clearCookie('session');
@@ -74,18 +77,36 @@ app.get('/error', (req, res) => {
 	res.render('error');
 });
 
-// RENDER HOME PAGE GET
+// GET HOME PAGE
 app.get('/home', (req, res) => {
-	const tempVars = { urls: urlDatabase, user: users[req.session.user_id] };
-	res.render('home', tempVars);
+	// console.log('Users', users);
+	const sessionId = req.session.userId;
+	if (!sessionId) {
+		res.redirect('/login');
+	} else if (sessionId !== null) {
+		const userURLs = getUserURLs(urlDatabase, sessionId);
+		// const candidateEmail = req.body.email;
+		// const candidatePassword = req.body.password;
+		// const userObj = verifyUser(candidateEmail, candidatePassword);
+		console.log('userURLs: ', userURLs);
+		console.log('USER!!!!!', req.session.userId);
+		const tempVars = {
+			// userObj: userObj,
+
+			user: users[req.session.userId],
+			urls: userURLs,
+		};
+		res.render('home', tempVars);
+	}
 });
 
 // RENDER CREATE SHORT-URL PAGE
 app.get('/home/createURL', (req, res) => {
+	const session_id = req.session.userId;
 	const tempVars = {
-		user: users[req.session.user_id],
+		user: users[req.session.userId],
 	};
-	if (req.session.user_id) {
+	if (session_id) {
 		res.render('createURL', tempVars);
 	} else {
 		res.render('createURL', tempVars);
@@ -97,7 +118,7 @@ app.get('/home/createURL', (req, res) => {
 app.post('/home', (req, res) => {
 	const longURL = req.body.longURL;
 	const shortURL = rndmStr();
-	urlDatabase[shortURL] = { longURL, userID: req.session.user_id };
+	urlDatabase[shortURL] = { longURL, userId: req.session.userId };
 	res.redirect('/home');
 });
 
@@ -117,23 +138,30 @@ app.post('/home/:shortURL', (req, res) => {
 	const longURL = req.body.longURL;
 	const shortURL = req.params.shortURL;
 	urlDatabase[shortURL].longURL = longURL;
-	const tempVars = { user: users[req.session.user_id], urls: urlDatabase, longURL: longURL, shortURL: shortURL };
+	const tempVars = {
+		user: users[req.session.userId],
+		urls: getUserURLs(urlDatabase, req.session.userId),
+		longURL: longURL,
+		shortURL: shortURL,
+	};
 	res.render('home', tempVars);
 });
 
 // EDIT BUTTON ON HOME PAGE
 app.get('/home/:shortURL', (req, res) => {
 	const shortURL = req.params.shortURL;
-	const cookieID = req.session.user_id;
-	const userID = urlDatabase[shortURL].userID;
+	const cookieId = req.session.userId;
+	const userId = urlDatabase[shortURL].userId;
 	const tempVars = {
+		cookieId: req.session.userId,
+		userId: urlDatabase[shortURL].userId,
 		shortURL: req.params.shortURL,
 		longURL: urlDatabase[shortURL],
-		user: users[req.session.user_id],
+		user: users[req.session.userId],
 	};
 	if (cookieID) {
-		// make sure user is logged in and the urls belong to him.
-		if (userID && cookieID === userID) {
+		// make sure user is logged in and the urls belong to them.
+		if (userId && cookieId === userId) {
 			res.render('show', tempVars);
 		} else {
 			res.redirect('/error');
@@ -144,11 +172,11 @@ app.get('/home/:shortURL', (req, res) => {
 // DELETE BUTTON ON HOME PAGE
 app.post('/home/:shortURL/delete', (req, res) => {
 	const shortURL = req.params.shortURL;
-	const cookieID = req.session.user_id;
-	const userID = urlDatabase[shortURL].userID;
-	if (cookieID) {
+	const cookieId = req.session.userId;
+	const userId = urlDatabase[shortURL].userId;
+	if (cookieId) {
 		// make sure user is logged in and the urls belong to him.
-		if (userID && cookieID === userID) {
+		if (userId && cookieId === userId) {
 			delete urlDatabase[shortURL];
 			res.redirect('/home');
 		} else {

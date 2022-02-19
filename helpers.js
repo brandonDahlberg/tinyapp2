@@ -1,18 +1,18 @@
 // URL DATABASE
 const urlDatabase = {
-	b2xVn2: { longURL: 'http://www.lighthouselabs.ca', userID: 'userRandomID' },
-	'9sm5xK': { longURL: 'http://www.google.com', userID: 'user2RandomID' },
+	b2xVn2: { longURL: 'http://www.lighthouselabs.ca', userId: 'userRandomId' },
+	'9sm5xK': { longURL: 'http://www.google.com', userId: 'user2RandomId' },
 };
 
 // USER DATABASE
 const users = {
-	userRandomID: {
-		id: 'userRandomID',
+	userRandomId: {
+		id: 'userRandomId',
 		email: 'user@example.com',
 		password: 'purple-monkey-dinosaur',
 	},
-	user2RandomID: {
-		id: 'user2RandomID',
+	user2RandomId: {
+		id: 'user2RandomId',
 		email: 'user2@example.com',
 		password: 'dishwasher-funk',
 	},
@@ -38,4 +38,14 @@ const verifyUserEmail = function (email, userDB) {
 	return false;
 };
 
-module.exports = { verifyUser, verifyUserEmail, rndmStr, urlDatabase, users };
+const getUserURLs = function (urlDatabase, session_id) {
+	let userURLs = {};
+	for (let shortURL in urlDatabase) {
+		if (urlDatabase[shortURL].userId === session_id) {
+			userURLs[shortURL] = urlDatabase[shortURL].longURL;
+		}
+	}
+	return userURLs;
+};
+
+module.exports = { verifyUser, verifyUserEmail, rndmStr, urlDatabase, users, getUserURLs };
