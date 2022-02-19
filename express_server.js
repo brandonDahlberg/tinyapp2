@@ -34,17 +34,16 @@ app.get('/login', (req, res) => {
 // Register POST
 app.post('/register', (req, res) => {
 	const newId = rndmStr();
-	const newEmail = req.body.email;
-	const newPassword = req.body.password;
-	if (newEmail === '' || newPassword === '') {
-		res.status(403).send('Username name or email fields');
+	const { email, password } = req.body;
+	if (!email || !password) {
+		res.status(400).send('Username name or email fields');
 	}
-	const userObj = verifyUserEmail(newEmail, users);
+	const userObj = verifyUserEmail(email, users);
 	if (userObj) {
-		res.status(403).send('user already exists');
-	} else if (!userObj) {
-		users[newId] = { id: newId, email: newEmail, password: newPassword };
-		req.session.user_id = users[newId].id;
+		res.status(400).send('user already exists');
+	} else {
+		users[newId] = { id: newId, email, password };
+		req.session.userId = users[newId].id;
 		res.redirect('/home');
 	}
 
@@ -53,46 +52,34 @@ app.post('/register', (req, res) => {
 app.post('/login', (req, res) => {
 	const candidateEmail = req.body.email;
 	const candidatePassword = req.body.password;
+	if (candidateEmail === '' || candidatePassword === '') {
+		res.status(400).send('Username name or email fields cannot be empty.');
+		return;
+	}
 	const userObj = verifyUser(candidateEmail, candidatePassword);
 	console.log('userObj', userObj);
 	if (!userObj) {
 		res.status(400).send('Login Invalid!');
-	} else if (candidateEmail === '' || candidatePassword === '') {
-		res.status(400).send('Username name or email fields cannot be empty.');
 	} else if (userObj) {
-		console.log('Hellooo');
 		req.session.userId = userObj.id;
-		console.log(userObj.id);
 		res.redirect('/home');
 	}
 });
+
 // Logout POST
 app.post('/logout', (req, res) => {
 	res.clearCookie('session');
 	res.redirect('/login');
 });
 
-// ERROR PAGE
-app.get('/error', (req, res) => {
-	res.render('error');
-});
-
 // GET HOME PAGE
 app.get('/home', (req, res) => {
-	// console.log('Users', users);
 	const sessionId = req.session.userId;
+	const userURLs = getUserURLs(urlDatabase, sessionId);
 	if (!sessionId) {
 		res.redirect('/login');
 	} else if (sessionId !== null) {
-		const userURLs = getUserURLs(urlDatabase, sessionId);
-		// const candidateEmail = req.body.email;
-		// const candidatePassword = req.body.password;
-		// const userObj = verifyUser(candidateEmail, candidatePassword);
-		console.log('userURLs: ', userURLs);
-		console.log('USER!!!!!', req.session.userId);
 		const tempVars = {
-			// userObj: userObj,
-
 			user: users[req.session.userId],
 			urls: userURLs,
 		};
@@ -159,12 +146,10 @@ app.get('/home/:shortURL', (req, res) => {
 		longURL: urlDatabase[shortURL],
 		user: users[req.session.userId],
 	};
-	if (cookieID) {
+	if (cookieId) {
 		// make sure user is logged in and the urls belong to them.
 		if (userId && cookieId === userId) {
 			res.render('show', tempVars);
-		} else {
-			res.redirect('/error');
 		}
 	}
 });
@@ -179,8 +164,6 @@ app.post('/home/:shortURL/delete', (req, res) => {
 		if (userId && cookieId === userId) {
 			delete urlDatabase[shortURL];
 			res.redirect('/home');
-		} else {
-			res.redirect('/error');
 		}
 	}
 });

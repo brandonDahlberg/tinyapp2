@@ -28,14 +28,14 @@ const verifyUser = function (email, password) {
 	for (let id in users) {
 		if (users[id].email === email && users[id].password === password) return users[id];
 	}
-	return false;
+	return null;
 };
 
 const verifyUserEmail = function (email, userDB) {
 	for (let id in userDB) {
 		if (userDB[id].email === email) return userDB[id];
 	}
-	return false;
+	return null;
 };
 
 const getUserURLs = function (urlDatabase, session_id) {
