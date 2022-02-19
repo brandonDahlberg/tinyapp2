@@ -18,6 +18,9 @@ app.use(
 		keys: ['Aura smells like wet dog', 'Toothless is so ruthless'],
 	})
 );
+app.get('/', (req, res) => {
+	res.redirect('/login');
+});
 
 // Register GET
 app.get('/register', (req, res) => {
@@ -35,11 +38,10 @@ app.get('/login', (req, res) => {
 app.post('/register', (req, res) => {
 	const newId = rndmStr();
 	const { email, password } = req.body;
-	if (!email || !password) {
-		res.status(400).send('Username name or email fields');
-	}
 	const userObj = verifyUserEmail(email, users);
-	if (userObj) {
+	if (!email || !password) {
+		res.status(500).send('Must enter valid email and password to register.');
+	} else if (userObj) {
 		res.status(400).send('user already exists');
 	} else {
 		users[newId] = { id: newId, email, password };
@@ -138,19 +140,20 @@ app.post('/home/:shortURL', (req, res) => {
 app.get('/home/:shortURL', (req, res) => {
 	const shortURL = req.params.shortURL;
 	const cookieId = req.session.userId;
-	const userId = urlDatabase[shortURL].userId;
+	// const userId = urlDatabase[shortURL].userId;
 	const tempVars = {
 		cookieId: req.session.userId,
-		userId: urlDatabase[shortURL].userId,
+		// userId: urlDatabase[shortURL].userId,
 		shortURL: req.params.shortURL,
 		longURL: urlDatabase[shortURL],
 		user: users[req.session.userId],
 	};
+
 	if (cookieId) {
 		// make sure user is logged in and the urls belong to them.
-		if (userId && cookieId === userId) {
-			res.render('show', tempVars);
-		}
+		res.render('show', tempVars);
+	} else if (!cookieId) {
+		res.render('home', tempVars);
 	}
 });
 
